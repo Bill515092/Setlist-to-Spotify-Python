@@ -74,9 +74,13 @@ def create_playlist(token, user_id):
         print("Error fetching user info (Create Playlist):", response.json()) 
         return None
 
-    return response, "Playlist Created"
+    return response.json()["id"]
 
+# Create a function that searches for an item. Can get the spotify ID of the track(s)
 
+# Create a function to search for a list of songs add them to an array (Spotify URI's). Pass the found spotift ID's
+
+# Create a function to add items to a playlist, and pass the song array variable in the bost of the request.
 
 token = get_token(auth_code)
 
@@ -86,5 +90,8 @@ if token:
 else:
     print("Failed to retrieve token.")
 
+playlist_id = create_playlist(token, user_id)
+print(playlist_id)
 
 create_playlist(token, user_id)
+
