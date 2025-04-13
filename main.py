@@ -92,10 +92,9 @@ def search_item(token):
     
     data = response.json()
 
-    items = data.get("tracks", {}).get("items", [])
+    items = data.get("tracks").get("items")
 
-    print(items[0]["id"])
-    return response
+    return items[0]["id"]
 
 # Create a function to search for a list of songs add them to an array (Spotify URI's). Pass the found spotift ID's
 
@@ -110,7 +109,8 @@ else:
     print("Failed to retrieve token.")
 
 
-search_item(token)
+spotify_id = search_item(token)
+print(spotify_id)
 # search_ids = search_item(token)
 # print(search_ids["tracks"]["items"]["id"])
 
