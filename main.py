@@ -77,6 +77,25 @@ def create_playlist(token, user_id):
     return response.json()["id"]
 
 # Create a function that searches for an item. Can get the spotify ID of the track(s)
+def search_item(token):
+    url = "https://api.spotify.com/v1/search" 
+    headers = get_auth_header(token)
+    params = {
+        "q": "remaster track:Doxy artist:Miles Davis",
+        "type": "track"
+    }
+    response = requests.get(url, headers=headers, params=params)
+
+    if response.status_code != 200:
+        print("Error fetching user info:", response.json()) 
+        return None
+    
+    data = response.json()
+
+    items = data.get("tracks", {}).get("items", [])
+
+    print(items[0]["id"])
+    return response
 
 # Create a function to search for a list of songs add them to an array (Spotify URI's). Pass the found spotift ID's
 
@@ -90,8 +109,13 @@ if token:
 else:
     print("Failed to retrieve token.")
 
-playlist_id = create_playlist(token, user_id)
-print(playlist_id)
 
-create_playlist(token, user_id)
+search_item(token)
+# search_ids = search_item(token)
+# print(search_ids["tracks"]["items"]["id"])
+
+# playlist_id = create_playlist(token, user_id)
+# print(playlist_id)
+
+# create_playlist(token, user_id)
 
