@@ -97,7 +97,23 @@ def search_item(token):
     return items[0]["id"]
 
 # Create a function to search for a list of songs add them to an array (Spotify URI's). Pass the found spotift ID's
+def search_tracks(token, spotify_id):
+    url = "https://api.spotify.com/v1/tracks"
+    headers = get_auth_header(token)
+    params = {
+        "market": "UK",
+        "ids": spotify_id  
+    }
+    response = requests.get(url, headers=headers, params=params)
 
+    if response.status_code != 200:
+        print("Error fetching user info:", response.json()) 
+        return None
+    
+    data = response.json()
+
+    return data.get("tracks")[0]["uri"]
+    
 # Create a function to add items to a playlist, and pass the song array variable in the bost of the request.
 
 token = get_token(auth_code)
@@ -110,9 +126,9 @@ else:
 
 
 spotify_id = search_item(token)
-print(spotify_id)
-# search_ids = search_item(token)
-# print(search_ids["tracks"]["items"]["id"])
+# print(spotify_id)
+
+spotify_uris = search_tracks(token, spotify_id)
 
 # playlist_id = create_playlist(token, user_id)
 # print(playlist_id)
