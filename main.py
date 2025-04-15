@@ -91,7 +91,6 @@ def search_item(token):
         return None
     
     data = response.json()
-
     items = data.get("tracks").get("items")
 
     return items[0]["id"]
@@ -115,12 +114,30 @@ def search_tracks(token, spotify_id):
     return data.get("tracks")[0]["uri"]
     
 # Create a function to add items to a playlist, and pass the song array variable in the bost of the request.
+def add_to_playlist(token, spotify_uri, playlist_id):
+    url = f"https://api.spotify.com/v1/playlists/{playlist_id}/tracks"
+    headers = get_auth_header(token)
+    body = {
+        "uris": [spotify_uri],
+        "position": 0
+    }
+    data = json.dumps(body)
+
+    response = requests.post(url, headers=headers, data=data)
+
+    if response.status_code != 201:
+        print("Error fetching user info (Create Playlist):", response.json()) 
+        return None
+    
+    return response.json()
+
+    
 
 token = get_token(auth_code)
 
 if token:
     user_id = get_user_id(token)
-    print("User ID:", user_id)
+    # print("User ID:", user_id)
 else:
     print("Failed to retrieve token.")
 
@@ -129,9 +146,10 @@ spotify_id = search_item(token)
 # print(spotify_id)
 
 spotify_uris = search_tracks(token, spotify_id)
+# print(spotify_uris)
 
-# playlist_id = create_playlist(token, user_id)
+playlist_id = create_playlist(token, user_id)
 # print(playlist_id)
 
-# create_playlist(token, user_id)
-
+create_playlist(token, user_id)
+add_to_playlist(token, spotify_uris, playlist_id)
