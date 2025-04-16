@@ -18,6 +18,12 @@ webbrowser.open(auth_url)
 
 auth_code = input("Paste the authorization code from URL: ")
 
+
+band_name = "The Story So Far"
+setlist = ["Small Talk", "Quicksand", "Framework"]
+id_arr = []
+
+
 def get_token(auth_code):
     auth_string = client_id + ":" + client_secret
     auth_bytes = auth_string.encode("utf-8")
@@ -77,23 +83,29 @@ def create_playlist(token, user_id):
     return response.json()["id"]
 
 # Create a function that searches for an item. Can get the spotify ID of the track(s)
-def search_item(token):
-    url = "https://api.spotify.com/v1/search" 
-    headers = get_auth_header(token)
-    params = {
-        "q": "remaster track:Doxy artist:Miles Davis",
-        "type": "track"
-    }
-    response = requests.get(url, headers=headers, params=params)
+def search_item(token, band_name, setlist):
 
-    if response.status_code != 200:
-        print("Error fetching user info:", response.json()) 
-        return None
+    for i in setlist:
+        
+        url = "https://api.spotify.com/v1/search" 
+        headers = get_auth_header(token)
+        params = {
+            "q": f"track:{i} artist:{band_name}",
+            "type": "track",
+            "market": "GB"
+        }
+        response = requests.get(url, headers=headers, params=params)
+
+        if response.status_code != 200:
+            print("Error fetching user info:", response.json()) 
+            return None
+        
+        data = response.json()
+        items = data.get("tracks").get("items")
+        id_arr.append(items[0]["id"])
+ 
+    return id_arr
     
-    data = response.json()
-    items = data.get("tracks").get("items")
-
-    return items[0]["id"]
 
 # Create a function to search for a list of songs add them to an array (Spotify URI's). Pass the found spotift ID's
 def search_tracks(token, spotify_id):
@@ -141,15 +153,16 @@ if token:
 else:
     print("Failed to retrieve token.")
 
-
-spotify_id = search_item(token)
+search_item(token, band_name, setlist)
 # print(spotify_id)
+print(id_arr)
 
-spotify_uris = search_tracks(token, spotify_id)
+# spotify_uris = search_tracks(token, spotify_id)
 # print(spotify_uris)
 
-playlist_id = create_playlist(token, user_id)
+# playlist_id = create_playlist(token, user_id)
 # print(playlist_id)
 
-create_playlist(token, user_id)
-add_to_playlist(token, spotify_uris, playlist_id)
+search_item(token, band_name, setlist)
+# create_playlist(token, user_id)
+# add_to_playlist(token, spotify_uris, playlist_id)
