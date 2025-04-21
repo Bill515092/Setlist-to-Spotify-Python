@@ -19,8 +19,8 @@ webbrowser.open(auth_url)
 auth_code = input("Paste the authorization code from URL: ")
 
 
-band_name = "The Story So Far"
-setlist = ["Small Talk", "Quicksand", "Framework", "Empty Space", "Roam", "Navy Blue"]
+band_name = "Sleep Token"
+setlist = ["Chokehold", "Rain", "Granite", "Take Me Back To Eden", "Aqua Regia", "Vore", "The Summoning", "Alkaline", "Blood Sport"]
 id_arr = []
 uri_arr = []
 
@@ -51,7 +51,6 @@ def get_token(auth_code):
 def get_auth_header(token):
     return {"Authorization": f"Bearer {token}"}
 
-
 def get_user_id(token):
     url = "https://api.spotify.com/v1/me"
     headers = get_auth_header(token)
@@ -62,7 +61,6 @@ def get_user_id(token):
         return None
     
     return response.json().get("id")
-
 
 def create_playlist(token, user_id):
 
@@ -81,7 +79,6 @@ def create_playlist(token, user_id):
         return None
 
     return response.json()["id"]
-
 # Create a function that searches for an item. Can get the spotify ID of the track(s)
 def search_item(token, band_name, setlist):
 
@@ -108,15 +105,11 @@ def search_item(token, band_name, setlist):
         else:
             "We are unable to find this song. Please select another."
 
-    return id_arr
-    
-
+    return id_arr    
 # Create a function to search for a list of songs add them to an array (Spotify URI's). Pass the found spotift ID's
 def search_tracks(token, spotify_ids):
     
     spotify_ids = ",".join(spotify_ids)
-    print(spotify_ids)
-
     url = "https://api.spotify.com/v1/tracks"
     headers = get_auth_header(token)
     params = {
@@ -131,13 +124,13 @@ def search_tracks(token, spotify_ids):
     
     data = response.json()
     index = 0
+
     while len(uri_arr) < len(id_arr):
         uri = data.get("tracks")[index]["uri"]
         uri_arr.append(uri)
         index += 1
     
-    return uri_arr
-    
+    return uri_arr    
 # Create a function to add items to a playlist, and pass the song array variable in the bost of the request.
 def add_to_playlist(token, spotify_uris, playlist_id):
 
@@ -168,12 +161,8 @@ else:
 
 search_item(token, band_name, setlist)
 # print(id_arr)
-
 search_tracks(token, id_arr)
 # print("uri array =", uri_arr)
-
 playlist_id = create_playlist(token, user_id)
 # print(playlist_id)
-
-# create_playlist(token, user_id)
 add_to_playlist(token, uri_arr, playlist_id)
