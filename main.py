@@ -19,10 +19,11 @@ webbrowser.open(auth_url)
 auth_code = input("Paste the authorization code from URL: ")
 
 
-band_name = "Sleep Token"
-setlist = ["Chokehold", "Rain", "Granite", "Take Me Back To Eden", "Aqua Regia", "Vore", "The Summoning", "Alkaline", "Blood Sport"]
+band_name = "Motionless In White"
+setlist = ["Another Life", "Masterpiece", "Voices", "Reincarnate", "Eternally Yours", "Abigail", "Werewolf"]
 id_arr = []
 uri_arr = []
+
 
 def get_token(auth_code):
     auth_string = client_id + ":" + client_secret
@@ -99,8 +100,9 @@ def search_item(token, band_name, setlist):
         
         data = response.json()
         items = data.get("tracks").get("items")
+        artist_details = data.get("tracks").get("items")[0]["artists"]
 
-        if items[0]["name"] == i:
+        if items[0]["name"] == i and artist_details[0]["name"] == band_name:
             id_arr.append(items[0]["id"])
         else:
             "We are unable to find this song. Please select another."
