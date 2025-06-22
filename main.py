@@ -8,7 +8,8 @@ import webbrowser
 
 load_dotenv()
 
-
+my_email = os.getenv("EMAIL_ADDRESS")
+setlist_key = os.getenv("SETLIST_KEY")
 client_id = os.getenv("CLIENT_ID")
 client_secret = os.getenv("CLIENT_SECRET")
 redirect_URI = os.getenv("REDIRECT_URI")
@@ -18,12 +19,24 @@ webbrowser.open(auth_url)
 
 auth_code = input("Paste the authorization code from URL: ")
 
+# band_name can be filled with the user input.
+mb_band_name = "Sleep Token"
 
-band_name = "Motionless In White"
-setlist = ["Another Life", "Masterpiece", "Voices", "Reincarnate", "Eternally Yours", "Abigail", "Werewolf"]
+# band_name = "Sleep Token" 
+setlist = ["Euclid", "The Summoning", "Caramel", "Damocles", "Alkaline"]
 id_arr = []
 uri_arr = []
 
+def get_mbid(mb_band_name, email):
+    url = f"https://musicbrainz.org/ws/2/artist/?query=artist:{mb_band_name}&fmt=json"
+    headers = {"User-Agent": f"setlist_to_spotify ({email})"}
+    response = requests.get(url, headers=headers)
+    data = response.json().get("artists")[0]["id"]
+
+    if response.status_code != 200:
+        print("Error fetching user info:", data) 
+
+    return data
 
 def get_token(auth_code):
     auth_string = client_id + ":" + client_secret
@@ -161,10 +174,12 @@ if token:
 else:
     print("Failed to retrieve token.")
 
-search_item(token, band_name, setlist)
-# print(id_arr)
-search_tracks(token, id_arr)
-# print("uri array =", uri_arr)
-playlist_id = create_playlist(token, user_id)
-# print(playlist_id)
-add_to_playlist(token, uri_arr, playlist_id)
+mbid = get_mbid(mb_band_name, my_email)
+
+# search_item(token, band_name, setlist)
+# # print(id_arr)
+# search_tracks(token, id_arr)
+# # print("uri array =", uri_arr)
+# playlist_id = create_playlist(token, user_id)
+# # print(playlist_id)
+# add_to_playlist(token, uri_arr, playlist_id)
