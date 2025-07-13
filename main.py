@@ -9,7 +9,7 @@ import webbrowser
 load_dotenv()
 
 my_email = os.getenv("EMAIL_ADDRESS")
-setlist_key = os.getenv("SETLIST_KEY")
+setlist_key = os.getenv("SETLIST_API_KEY")
 client_id = os.getenv("CLIENT_ID")
 client_secret = os.getenv("CLIENT_SECRET")
 redirect_URI = os.getenv("REDIRECT_URI")
@@ -20,23 +20,48 @@ webbrowser.open(auth_url)
 auth_code = input("Paste the authorization code from URL: ")
 
 # band_name can be filled with the user input.
-mb_band_name = "Sleep Token"
+band_name = input("Please enter the name of the artist: ")
 
-# band_name = "Sleep Token" 
-setlist = ["Euclid", "The Summoning", "Caramel", "Damocles", "Alkaline"]
-id_arr = []
-uri_arr = []
-
-def get_mbid(mb_band_name, email):
-    url = f"https://musicbrainz.org/ws/2/artist/?query=artist:{mb_band_name}&fmt=json"
+def get_mbid(band_name, email):
+    url = f"https://musicbrainz.org/ws/2/artist/"
     headers = {"User-Agent": f"setlist_to_spotify ({email})"}
-    response = requests.get(url, headers=headers)
-    data = response.json().get("artists")[0]["id"]
+    params = {
+        "query": f"artist:{band_name.strip()}",
+        "fmt": "json"
+    }
+    response = requests.get(url, headers=headers, params=params)
 
     if response.status_code != 200:
-        print("Error fetching user info:", data) 
+        print("Error fetching user info:", response.status_code) 
 
-    return data
+    result = response.json().get("artists", [])
+
+    for artist in result:
+        if artist["name"].lower() == band_name.strip().lower():
+            return artist["id"]
+        
+    if result:
+        return result[0]["id"]
+
+def get_setlist(mbid, api_key):
+    setlist = []
+    url = f"https://api.setlist.fm/rest/1.0/artist/{mbid}/setlists"
+    headers = {
+        "Accept": "application/json",
+        "x-api-key": api_key
+    }
+    response = requests.get(url, headers=headers)
+    data = response.json().get("setlist")[2].get("sets").get("set")[0].get("song")
+    # print(data)
+    
+    for i in data:
+        for x in i.values():
+            if type(x) != bool and type(x) != dict and type(x) != int:
+                setlist.append(x)
+    
+    finished_setlist = list(filter(None, setlist)) 
+
+    return finished_setlist
 
 def get_token(auth_code):
     auth_string = client_id + ":" + client_secret
@@ -74,7 +99,7 @@ def get_user_id(token):
         print("Error fetching user info:", response.json()) 
         return None
     
-    return response.json().get("id")
+    return response.json()["id"]
 
 def create_playlist(token, user_id):
 
@@ -95,6 +120,7 @@ def create_playlist(token, user_id):
     return response.json()["id"]
 # Create a function that searches for an item. Can get the spotify ID of the track(s)
 def search_item(token, band_name, setlist):
+    id_arr = []
 
     for i in setlist:
         
@@ -114,8 +140,8 @@ def search_item(token, band_name, setlist):
         data = response.json()
         items = data.get("tracks").get("items")
         artist_details = data.get("tracks").get("items")[0]["artists"]
-
-        if items[0]["name"] == i and artist_details[0]["name"] == band_name:
+        
+        if items[0]["name"].lower() == i.lower() and artist_details[0]["name"].lower() == band_name.lower():
             id_arr.append(items[0]["id"])
         else:
             "We are unable to find this song. Please select another."
@@ -123,7 +149,7 @@ def search_item(token, band_name, setlist):
     return id_arr    
 # Create a function to search for a list of songs add them to an array (Spotify URI's). Pass the found spotift ID's
 def search_tracks(token, spotify_ids):
-    
+    uri_arr = []
     spotify_ids = ",".join(spotify_ids)
     url = "https://api.spotify.com/v1/tracks"
     headers = get_auth_header(token)
@@ -138,12 +164,11 @@ def search_tracks(token, spotify_ids):
         return None
     
     data = response.json()
-    index = 0
+    tracks = data.get("tracks")
 
-    while len(uri_arr) < len(id_arr):
-        uri = data.get("tracks")[index]["uri"]
+    for track in tracks:
+        uri = track["uri"]
         uri_arr.append(uri)
-        index += 1
     
     return uri_arr    
 # Create a function to add items to a playlist, and pass the song array variable in the bost of the request.
@@ -168,18 +193,19 @@ def add_to_playlist(token, spotify_uris, playlist_id):
 
 token = get_token(auth_code)
 
-if token:
-    user_id = get_user_id(token)
-    # print("User ID:", user_id)
-else:
-    print("Failed to retrieve token.")
+user_id = get_user_id(token)
 
-mbid = get_mbid(mb_band_name, my_email)
+playlist_id = create_playlist(token, user_id)
 
-# search_item(token, band_name, setlist)
-# # print(id_arr)
-# search_tracks(token, id_arr)
-# # print("uri array =", uri_arr)
-# playlist_id = create_playlist(token, user_id)
-# # print(playlist_id)
-# add_to_playlist(token, uri_arr, playlist_id)
+mbid = get_mbid(band_name, my_email)
+# print(mbid)
+finished_setlist = get_setlist(mbid, setlist_key)
+#  removing cover from MIW test setlsit
+finished_setlist.pop(0)
+# print(finished_setlist)
+filled_id_arr = search_item(token, band_name, finished_setlist)
+# print("id array = ", filled_id_arr)
+filled_uri_arr = search_tracks(token, filled_id_arr)
+print("uri array = ", filled_uri_arr)
+
+add_to_playlist(token, filled_uri_arr, playlist_id)
