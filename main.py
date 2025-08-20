@@ -20,7 +20,8 @@ webbrowser.open(auth_url)
 auth_code = input("Paste the authorization code from URL: ")
 
 # band_name can be filled with the user input.
-band_name = input("Please enter the name of the artist: ")
+# band_name = input("Please enter the name of the artist: ")
+band_name = "alpha wolf"
 
 def get_mbid(band_name, email):
     url = f"https://musicbrainz.org/ws/2/artist/"
@@ -51,17 +52,27 @@ def get_setlist(mbid, api_key):
         "x-api-key": api_key
     }
     response = requests.get(url, headers=headers)
-    data = response.json().get("setlist")[2].get("sets").get("set")[0].get("song")
-    # print(data)
+    song_data = response.json().get("setlist")[0].get("sets").get("set")[0].get("song")
+    venue_data = response.json().get("setlist")[0].get("venue").get("name")
+    date_data = response.json().get("setlist")[0].get("eventDate")
+    name_data = response.json().get("setlist")[0].get("artist").get("name")
+
+    #  Set up two variables for the venue information and the date of the show.
     
-    for i in data:
+    for i in song_data:
         for x in i.values():
             if type(x) != bool and type(x) != dict and type(x) != int:
                 setlist.append(x)
     
     finished_setlist = list(filter(None, setlist)) 
 
-    return finished_setlist
+    # Return the venue, date and setlist as a dict.
+    return {
+        "name": name_data,
+        "date": date_data,
+        "venue": venue_data,
+        "setlist": finished_setlist
+        }
 
 def get_token(auth_code):
     auth_string = client_id + ":" + client_secret
@@ -101,13 +112,13 @@ def get_user_id(token):
     
     return response.json()["id"]
 
-def create_playlist(token, user_id):
+def create_playlist(token, user_id, name, venue, date):
 
     url = f"https://api.spotify.com/v1/users/{user_id}/playlists"
     headers = get_auth_header(token)
     body = {
-        "name": "Test Playlist",
-        "description": "Test playlist description",
+        "name": f"{name}-{venue}-{date}",
+        "description": f"{name} show at {venue} on {date}",
         "public": False
     }
     data = json.dumps(body)
@@ -195,17 +206,17 @@ token = get_token(auth_code)
 
 user_id = get_user_id(token)
 
-playlist_id = create_playlist(token, user_id)
 
 mbid = get_mbid(band_name, my_email)
-# print(mbid)
-finished_setlist = get_setlist(mbid, setlist_key)
+
+setlist_obj = get_setlist(mbid, setlist_key)
 #  removing cover from MIW test setlsit
-finished_setlist.pop(0)
+# finished_setlist.pop(0) 
 # print(finished_setlist)
-filled_id_arr = search_item(token, band_name, finished_setlist)
+filled_id_arr = search_item(token, band_name, setlist_obj["setlist"])
 # print("id array = ", filled_id_arr)
 filled_uri_arr = search_tracks(token, filled_id_arr)
-print("uri array = ", filled_uri_arr)
+# print("uri array = ", filled_uri_arr)
+playlist_id = create_playlist(token, user_id, setlist_obj["name"], setlist_obj["venue"], setlist_obj["date"])
 
 add_to_playlist(token, filled_uri_arr, playlist_id)
