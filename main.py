@@ -206,7 +206,6 @@ token = get_token(auth_code)
 
 user_id = get_user_id(token)
 
-
 mbid = get_mbid(band_name, my_email)
 
 setlist_obj = get_setlist(mbid, setlist_key)
